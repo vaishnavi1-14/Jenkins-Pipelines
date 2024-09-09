@@ -1,0 +1,34 @@
+pipeline{
+    agent{
+        label{
+            label "built-in"
+        }
+    }
+    tools{
+        maven 'apache-maven-3.9.9'
+    }
+    stages{
+        stage("cloning-repo"){
+            steps{
+                sh 'rm -rf *'
+                sh 'git clone https://github.com/vaishnavi1-14/project.git'
+                
+            }
+            
+        }
+        stage("build-war"){
+            steps{
+                sh '''
+                cd project
+                mvn clean install
+                '''
+            }
+        }
+        stage("deply-war"){
+            steps{
+                sh 'rm -rf /mnt/servers/apache-tomcat-9.0.93/webapps/LoginWebApp.war'
+                sh 'cp -r project/target/*.war /mnt/servers/apache-tomcat-9.0.93/webapps'
+            }
+        }
+    }
+}
