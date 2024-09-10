@@ -1,0 +1,62 @@
+pipeline{
+    agent{
+        label{
+            label "slave-1"
+        }
+    }
+    tools{
+        maven 'apache-maven-3.9.9'
+    }
+    stages{
+        stage("clean workspace"){
+                    steps{
+                        sh 'sudo rm -rf *'
+                        
+                    }
+            }
+        stage("parallel-stages"){
+            
+            parallel{
+                
+                stage("install tomcat"){
+                    steps{
+                        sh '''
+                        mkdir servers
+                        cd servers
+                        wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.93/bin/apache-tomcat-9.0.93.zip
+                        unzip apache-tomcat-9.0.93.zip
+                        rm -rf apache-tomcat-9.0.93.zip
+                        chmod -R 777 apache-tomcat-9.0.93
+                        cd apache-tomcat-9.0.93
+                        cd bin
+                        ./startup.sh
+                        '''
+                        
+                    }
+                }
+                stage("clone"){
+                    steps{
+                        sh 'sudo git clone https://github.com/vaishnavi1-14/project.git'
+                        
+                    }
+                }
+                
+            }
+        }
+        stage("build and package"){
+                    steps{
+                        sh '''
+                        cd project
+                        mvn clean install
+                        '''
+                    }
+        }
+        stage("deploy"){
+            steps{
+                sh 'rm -rf *.war'
+                sh 'cp -r project/target/*.war servers/apache-tomcat-9.0.93/webapps'
+            }
+        }
+        
+    }
+}
