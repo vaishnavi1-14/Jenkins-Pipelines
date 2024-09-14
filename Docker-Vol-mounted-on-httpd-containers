@@ -1,0 +1,39 @@
+pipeline{
+    agent{
+        label{
+            label "built-in"
+        }
+    }
+    stages{
+        stage("install docker"){
+            steps{
+            sh 'rm -rf *'    
+            sh 'yum install docker -y'
+            sh 'service docker start'
+            sh 'docker pull httpd'
+            }
+            
+        }
+        stage("create docker vol"){
+            steps{
+                sh 'docker kill  server-1 server-2'
+                sh 'docker rm server-2 server-1'
+                sh 'docker volume rm vol-1'
+                sh 'docker volume create vol-1'
+                sh 'echo "hello...!!!" >> /var/lib/docker/volumes/vol-1/_data/index.html'
+                sh 'chmod -R 777 /var/lib/docker/volumes/vol-1/_data/index.html'
+                
+                
+            }
+        }
+        stage("run containers and mount vol"){
+            steps{
+                
+                sh 'docker run -itdv vol-1:/usr/local/apache2/htdocs -p 80:80 --name server-1 httpd'
+                sh 'docker run -itdv vol-1:/usr/local/apache2/htdocs -p 81:80 --name server-2 httpd'
+                
+                
+            }
+        }
+    }
+}
